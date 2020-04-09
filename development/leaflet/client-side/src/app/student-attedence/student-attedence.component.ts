@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppServiceComponent } from '../app.service';
 import { Router } from '@angular/router';
@@ -27,7 +27,7 @@ export class StudentAttedenceComponent implements OnInit {
   public clusterNames: any = [];
   public schoolsNames: any = [];
   public stylesFile = "../assets/mapStyles.json";
-  public id: any = '';
+  public id = '';
   public blockHidden: boolean = true;
   public clusterHidden: boolean = true;
   public myDistrict: any;
@@ -70,40 +70,37 @@ export class StudentAttedenceComponent implements OnInit {
     if (this.markers.length !== 0) {
       document.getElementById('spinner').style.display = 'none';
     } else {
+      // setTimeout(() => {
       document.getElementById('spinner').style.display = 'none';
       document.getElementById('errMsg').style.color = 'red';
       document.getElementById('errMsg').style.display = 'block';
       document.getElementById('errMsg').innerHTML = 'No data found';
+      // }, 20000);
     }
   }
 
-  errMsg() {
-    document.getElementById('errMsg').style.display = 'none';
-    document.getElementById('spinner').style.display = 'block';
-    document.getElementById('spinner').style.marginTop = '3%';
-  }
-
   districtWise() {
-    this.markers = [];
+    this.districtsNames = [];
     this.blockHidden = true;
     this.clusterHidden = true;
 
-    this.errMsg();
+    document.getElementById('errMsg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('spinner').style.marginTop = '3%';
     this.title = "State";
     this.titleName = "Gujarat"
-    this.districtsNames = [];
+
     this.service.dist_wise_data().subscribe(res => {
-      this.mylatlngData = res;
 
       this.lat = 22.790988462301428;
       this.lng = 72.02733294142871;
       this.zoom = 7;
 
+      this.mylatlngData = res;
       this.dist = true;
       this.blok = false;
       this.clust = false;
       this.skul = false;
-
       var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
       let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
       this.colors = colors;
@@ -115,7 +112,7 @@ export class StudentAttedenceComponent implements OnInit {
         this.districtsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['district_name'] });
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        this.markers.push(
+        this.districts.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['district_name'],
@@ -133,6 +130,7 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
+      this.markers = this.districts;
       this.loaderAndErr();
     });
 
@@ -149,11 +147,13 @@ export class StudentAttedenceComponent implements OnInit {
 
 
   schoolWise() {
-    this.markers = [];
     this.blockHidden = true;
     this.clusterHidden = true;
-    this.myDistrict = {};
-    this.errMsg();
+
+    this.markers = [];
+    document.getElementById('errMsg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('spinner').style.marginTop = '3%';
     this.title = "State";
     this.titleName = "Gujarat"
     this.service.school_wise_data().subscribe(res => {
@@ -172,8 +172,8 @@ export class StudentAttedenceComponent implements OnInit {
       let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
       this.colors = colors;
       for (var i = 0; i < sorted.length; i++) {
-        // this.districtsIds.push(sorted[i]['x_axis']);
-        this.markers.push(
+        this.districtsIds.push(sorted[i]['x_axis']);
+        this.schools.push(
           {
             id: sorted[i]['x_axis'],
             dist: sorted[i]['district_name'],
@@ -192,6 +192,8 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
+
+      this.markers = this.schools;
       this.loaderAndErr();
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
@@ -200,11 +202,13 @@ export class StudentAttedenceComponent implements OnInit {
   }
 
   clusterWise() {
-    this.markers = [];
     this.blockHidden = true;
     this.clusterHidden = true;
-    this.myDistrict = {};
-    this.errMsg();
+
+    this.markers = [];
+    document.getElementById('errMsg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('spinner').style.marginTop = '3%';
     this.title = "State";
     this.titleName = "Gujarat"
     this.service.cluster_wise_data().subscribe(res => {
@@ -225,8 +229,8 @@ export class StudentAttedenceComponent implements OnInit {
       for (var i = 0; i < sorted.length; i++) {
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
-        // this.clusterIds.push(sorted[i]['x_axis']);
-        this.markers.push(
+        this.clusterIds.push(sorted[i]['x_axis']);
+        this.cluster.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['crc_name'],
@@ -237,7 +241,6 @@ export class StudentAttedenceComponent implements OnInit {
             lng: sorted[i]['z_value'],
             stdCount: sorted[i]['students_count'],
             schCount: sorted[i]['total_schools'],
-            clust: this.clust,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 4.5,
@@ -247,6 +250,9 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
+      console.log(this.cluster);
+
+      this.markers = this.cluster;
       this.loaderAndErr();
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
@@ -255,11 +261,13 @@ export class StudentAttedenceComponent implements OnInit {
   }
 
   blockWise() {
-    this.markers = [];
     this.blockHidden = true;
     this.clusterHidden = true;
-    this.myDistrict = {};
-    this.errMsg();
+
+    this.markers = [];
+    document.getElementById('errMsg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('spinner').style.marginTop = '3%';
     this.title = "State";
     this.titleName = "Gujarat"
     this.service.block_wise_data().subscribe(res => {
@@ -278,10 +286,11 @@ export class StudentAttedenceComponent implements OnInit {
       let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
       this.colors = colors;
       for (var i = 0; i < sorted.length; i++) {
-        // this.blocksIds.push(sorted[i]['x_axis']);
+        this.blocksIds.push(sorted[i]['x_axis']);
+        this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        this.markers.push(
+        this.blocks.push(
           {
             id: sorted[i]['x_axis'],
             dist: sorted[i]['district_name'],
@@ -291,7 +300,6 @@ export class StudentAttedenceComponent implements OnInit {
             lng: sorted[i]['z_value'],
             stdCount: sorted[i]['students_count'],
             schCount: sorted[i]['total_schools'],
-            blok: this.blok,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 5.5,
@@ -301,6 +309,8 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
+
+      this.markers = this.blocks;
       this.loaderAndErr();
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
@@ -311,20 +321,18 @@ export class StudentAttedenceComponent implements OnInit {
   clickedMarker(label) {
 
     if (this.districtsIds.includes(label[2])) {
-
-      this.markers = [];
       this.blockHidden = true;
       this.clusterHidden = true;
 
       this.studentCount = 0;
       this.schoolCount = 0;
-
-
-      this.errMsg();
+      this.markers = [];
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('spinner').style.marginTop = '3%';
 
       this.title = "District";
       this.titleName = label[1];
-
       localStorage.setItem('dist', label[1]);
       this.service.blockPerDist(label[2]).subscribe(res => {
         this.dist = false;
@@ -337,18 +345,16 @@ export class StudentAttedenceComponent implements OnInit {
         this.lat = Number(label[3]);
         this.lng = Number(label[4]);
         this.blocksNames = [];
-
         var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
         let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
         this.colors = colors;
-
         for (var i = 0; i < sorted.length; i++) {
           this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
           this.blocksIds.push(sorted[i]['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
 
-          this.markers.push(
+          this.blocks.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['block_name'],
@@ -358,7 +364,6 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
-              blok: this.blok,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 5.5,
@@ -368,11 +373,16 @@ export class StudentAttedenceComponent implements OnInit {
               }
             });
         };
+
+        this.markers = this.blocks;
         this.loaderAndErr();
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
+      // element1[1].style.display = 'block';
+      // this.markers = [];
       this.blocks = [];
+      this.blok = false;
     }
 
     if (this.blocksIds.includes(label[2])) {
@@ -380,7 +390,10 @@ export class StudentAttedenceComponent implements OnInit {
       this.clusterHidden = true;
 
       this.markers = [];
-      this.errMsg();
+      this.cluster = [];
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('spinner').style.marginTop = '3%';
 
       this.studentCount = 0;
       this.schoolCount = 0;
@@ -408,7 +421,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.clusterIds.push(sorted[i]['x_axis']);
           this.clusterNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['crc_name'] });
 
-          this.markers.push(
+          this.cluster.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['crc_name'],
@@ -420,8 +433,6 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
-              clust: this.clust,
-              blok: this.blok,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 4.5,
@@ -431,21 +442,26 @@ export class StudentAttedenceComponent implements OnInit {
               }
             });
         };
+        this.markers = this.cluster;
         this.loaderAndErr();
-        this.clust = false;
-        this.blok = true;
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
+      this.cluster = [];
+      this.clust = false;
     }
 
     if (this.clusterIds.includes(label[2])) {
+      this.myDistrict = label[1];
       this.blockHidden = true;
       this.clusterHidden = true;
 
 
       this.markers = [];
-      this.errMsg();
+      this.schools = [];
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('spinner').style.marginTop = '3%';
       this.studentCount = 0;
       this.schoolCount = 0;
       this.title = "Cluster";
@@ -467,7 +483,7 @@ export class StudentAttedenceComponent implements OnInit {
 
         for (var i = 0; i < sorted.length; i++) {
           this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
-          this.markers.push(
+          this.schools.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['schoolName'],
@@ -479,8 +495,6 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
-              skul: this.skul,
-              blok: this.blok,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 3.5,
@@ -490,13 +504,14 @@ export class StudentAttedenceComponent implements OnInit {
               }
             });
         };
-        this.schoolCount = this.markers.length;
+        this.schoolCount = this.schools.length;
+        this.markers = this.schools;
         this.loaderAndErr();
-        this.skul = false;
-        this.blok = true;
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
+      this.schools = [];
+      this.skul = false;
     }
   };
 
@@ -522,8 +537,9 @@ export class StudentAttedenceComponent implements OnInit {
 
   myDistData(data) {
     if (this.clust === true) {
-      this.markers = [];
-      this.errMsg();
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('spinner').style.marginTop = '3%';
 
       this.title = "Dist";
       this.titleName = data.name;
@@ -552,9 +568,8 @@ export class StudentAttedenceComponent implements OnInit {
         for (var i = 0; i < sorted.length; i++) {
           this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-          this.clusterIds.push(sorted['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['blockName'] });
-          this.markers.push(
+          this.cluster.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['crc_name'],
@@ -566,7 +581,6 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
-              clust: this.clust,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 4.5,
@@ -577,7 +591,8 @@ export class StudentAttedenceComponent implements OnInit {
             });
 
         };
-        console.log(this.clusterIds);
+
+        this.markers = this.cluster;
         this.loaderAndErr();
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
@@ -586,10 +601,9 @@ export class StudentAttedenceComponent implements OnInit {
       this.clust = false;
 
     } else if (this.skul === true) {
-      this.markers = [];
-      this.clusterHidden = true;
-      this.blockHidden = false;
-      this.errMsg();
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('spinner').style.marginTop = '3%';
 
       this.title = "Cluster";
       this.titleName = data.name;
@@ -605,7 +619,9 @@ export class StudentAttedenceComponent implements OnInit {
 
         this.mylatlngData = res;
         this.zoom = 9;
-
+        this.lat = Number(this.mylatlngData[5]['y_value']);
+        this.lng = Number(this.mylatlngData[5]['z_value']);
+        this.schools = [];
         this.studentCount = 0;
         this.schoolCount = 0;
         var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
@@ -617,7 +633,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
           this.schoolsIds.push(sorted[i]['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
-          this.markers.push(
+          this.schools.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['schoolName'],
@@ -629,7 +645,6 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
-              skul: this.skul,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 3.5,
@@ -640,16 +655,20 @@ export class StudentAttedenceComponent implements OnInit {
             });
         };
 
+        this.markers = this.schools;
         this.loaderAndErr();
-        this.skul = false;
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
-
+      // element1[1].style.display = 'block';
+      // this.markers = [];
+      this.schools = [];
+      this.skul = false;
     } else {
-      this.markers = [];
-      this.errMsg();
-      console.log("blok");
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('spinner').style.marginTop = '3%';
+
       this.studentCount = 0;
       this.schoolCount = 0;
       this.title = "District";
@@ -664,9 +683,9 @@ export class StudentAttedenceComponent implements OnInit {
         this.skul = false;
 
         this.mylatlngData = res;
-        this.zoom = 8;
-        this.lat = Number(this.mylatlngData[0]['y_value']);
-        this.lng = Number(this.mylatlngData[0]['z_value']);
+        this.zoom = 9;
+        this.lat = Number(this.mylatlngData[5]['y_value']);
+        this.lng = Number(this.mylatlngData[5]['z_value']);
         this.blocksNames = [];
 
         var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
@@ -678,7 +697,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
           this.blocksIds.push(sorted[i]['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
-          this.markers.push(
+          this.blocks.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['block_name'],
@@ -688,7 +707,6 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
-              blok: this.blok,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 5.5,
@@ -699,17 +717,24 @@ export class StudentAttedenceComponent implements OnInit {
             });
 
         };
+
+        this.markers = this.blocks;
         this.loaderAndErr();
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
+      // element1[1].style.display = 'block';
+      // this.markers = [];
+      this.blocks = [];
       this.blok = false;
+      console.log("myData clicked", data);
     }
   }
 
   myBlockData(data) {
-    this.markers = [];
-    this.errMsg();
+    document.getElementById('errMsg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('spinner').style.marginTop = '3%';
 
     this.studentCount = 0;
     this.schoolCount = 0;
@@ -738,9 +763,8 @@ export class StudentAttedenceComponent implements OnInit {
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
         console.log({ name: sorted[i]['crc_name'] });
-        this.clusterIds.push(sorted[i]['x_axis']);
         this.clusterNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['crc_name'] });
-        this.markers.push(
+        this.cluster.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['crc_name'],
@@ -752,8 +776,6 @@ export class StudentAttedenceComponent implements OnInit {
             lng: sorted[i]['z_value'],
             stdCount: sorted[i]['students_count'],
             schCount: sorted[i]['total_schools'],
-            clust: this.clust,
-            blok: this.blok,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 4.5,
@@ -764,17 +786,22 @@ export class StudentAttedenceComponent implements OnInit {
           });
 
       };
+      console.log(this.clusterNames)
+      this.markers = this.cluster;
       this.loaderAndErr();
-      this.clust = false;
-      this.blok = true;
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
     element1[0].style.display = 'block';
+    // element1[1].style.display = 'block';
+    // this.markers = [];
+    this.cluster = [];
+    console.log("myData clicked", data);
   }
 
   myClusterData(data) {
-    this.markers = [];
-    this.errMsg();
+    document.getElementById('errMsg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('spinner').style.marginTop = '3%';
     var distId = localStorage.getItem('dist');
 
     this.studentCount = 0;
@@ -793,7 +820,7 @@ export class StudentAttedenceComponent implements OnInit {
       this.lat = Number(this.mylatlngData[0]['y_value']);
       this.lng = Number(this.mylatlngData[0]['z_value']);
 
-      this.clusterIds = [];
+      this.schools = [];
 
       var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
       let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
@@ -802,9 +829,9 @@ export class StudentAttedenceComponent implements OnInit {
       for (var i = 0; i < sorted.length; i++) {
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-
+        this.schoolsIds.push(sorted[i]['x_axis']);
         // this.schoolsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
-        this.markers.push(
+        this.schools.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['schoolName'],
@@ -816,8 +843,6 @@ export class StudentAttedenceComponent implements OnInit {
             lng: sorted[i]['z_value'],
             stdCount: sorted[i]['students_count'],
             schCount: sorted[i]['total_schools'],
-            skul: this.skul,
-            blok: this.blok,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 3.5,
@@ -828,12 +853,15 @@ export class StudentAttedenceComponent implements OnInit {
           });
       };
       this.schoolCount = this.schools.length;
+      this.markers = this.schools;
       this.loaderAndErr();
-      this.skul = false;
-      this.blok = true;
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
     element1[0].style.display = 'block';
+    // element1[1].style.display = 'block';
+    // this.markers = [];
+    this.schools = [];
+    console.log("myData clicked", data);
   }
 
   color() {
