@@ -115,7 +115,7 @@ export class StudentAttedenceComponent implements OnInit {
         this.districtsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['district_name'] });
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        this.districts.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['district_name'],
@@ -133,7 +133,6 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
-      this.markers = this.districts;
       this.loaderAndErr();
     });
 
@@ -174,7 +173,7 @@ export class StudentAttedenceComponent implements OnInit {
       this.colors = colors;
       for (var i = 0; i < sorted.length; i++) {
         // this.districtsIds.push(sorted[i]['x_axis']);
-        this.schools.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             dist: sorted[i]['district_name'],
@@ -193,8 +192,6 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
-
-      this.markers = this.schools;
       this.loaderAndErr();
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
@@ -229,7 +226,7 @@ export class StudentAttedenceComponent implements OnInit {
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         // this.clusterIds.push(sorted[i]['x_axis']);
-        this.cluster.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['crc_name'],
@@ -250,9 +247,6 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
-      console.log(this.cluster);
-
-      this.markers = this.cluster;
       this.loaderAndErr();
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
@@ -287,7 +281,7 @@ export class StudentAttedenceComponent implements OnInit {
         // this.blocksIds.push(sorted[i]['x_axis']);
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        this.blocks.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             dist: sorted[i]['district_name'],
@@ -307,8 +301,6 @@ export class StudentAttedenceComponent implements OnInit {
             }
           });
       };
-
-      this.markers = this.blocks;
       this.loaderAndErr();
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
@@ -356,7 +348,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.blocksIds.push(sorted[i]['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
 
-          this.blocks.push(
+          this.markers.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['block_name'],
@@ -376,8 +368,6 @@ export class StudentAttedenceComponent implements OnInit {
               }
             });
         };
-
-        this.markers = this.blocks;
         this.loaderAndErr();
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
@@ -390,7 +380,6 @@ export class StudentAttedenceComponent implements OnInit {
       this.clusterHidden = true;
 
       this.markers = [];
-      this.cluster = [];
       this.errMsg();
 
       this.studentCount = 0;
@@ -419,7 +408,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.clusterIds.push(sorted[i]['x_axis']);
           this.clusterNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['crc_name'] });
 
-          this.cluster.push(
+          this.markers.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['crc_name'],
@@ -442,14 +431,12 @@ export class StudentAttedenceComponent implements OnInit {
               }
             });
         };
-        this.markers = this.cluster;
         this.loaderAndErr();
         this.clust = false;
         this.blok = true;
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
-      this.cluster = [];
     }
 
     if (this.clusterIds.includes(label[2])) {
@@ -458,7 +445,6 @@ export class StudentAttedenceComponent implements OnInit {
 
 
       this.markers = [];
-      this.schools = [];
       this.errMsg();
       this.studentCount = 0;
       this.schoolCount = 0;
@@ -481,7 +467,7 @@ export class StudentAttedenceComponent implements OnInit {
 
         for (var i = 0; i < sorted.length; i++) {
           this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
-          this.schools.push(
+          this.markers.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['schoolName'],
@@ -504,15 +490,13 @@ export class StudentAttedenceComponent implements OnInit {
               }
             });
         };
-        this.schoolCount = this.schools.length;
-        this.markers = this.schools;
+        this.schoolCount = this.markers.length;
         this.loaderAndErr();
         this.skul = false;
         this.blok = true;
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
-      this.schools = [];
     }
   };
 
@@ -538,6 +522,7 @@ export class StudentAttedenceComponent implements OnInit {
 
   myDistData(data) {
     if (this.clust === true) {
+      this.markers = [];
       this.errMsg();
 
       this.title = "Dist";
@@ -567,8 +552,9 @@ export class StudentAttedenceComponent implements OnInit {
         for (var i = 0; i < sorted.length; i++) {
           this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+          this.clusterIds.push(sorted['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['blockName'] });
-          this.cluster.push(
+          this.markers.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['crc_name'],
@@ -580,6 +566,7 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
+              clust: this.clust,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 4.5,
@@ -590,8 +577,7 @@ export class StudentAttedenceComponent implements OnInit {
             });
 
         };
-
-        this.markers = this.cluster;
+        console.log(this.clusterIds);
         this.loaderAndErr();
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
@@ -600,6 +586,7 @@ export class StudentAttedenceComponent implements OnInit {
       this.clust = false;
 
     } else if (this.skul === true) {
+      this.markers = [];
       this.clusterHidden = true;
       this.blockHidden = false;
       this.errMsg();
@@ -619,7 +606,6 @@ export class StudentAttedenceComponent implements OnInit {
         this.mylatlngData = res;
         this.zoom = 9;
 
-        this.schools = [];
         this.studentCount = 0;
         this.schoolCount = 0;
         var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
@@ -631,7 +617,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
           this.schoolsIds.push(sorted[i]['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
-          this.schools.push(
+          this.markers.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['schoolName'],
@@ -643,6 +629,7 @@ export class StudentAttedenceComponent implements OnInit {
               lng: sorted[i]['z_value'],
               stdCount: sorted[i]['students_count'],
               schCount: sorted[i]['total_schools'],
+              skul: this.skul,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 3.5,
@@ -653,17 +640,14 @@ export class StudentAttedenceComponent implements OnInit {
             });
         };
 
-        this.markers = this.schools;
         this.loaderAndErr();
-        this.schools = [];
         this.skul = false;
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
-      // element1[1].style.display = 'block';
-      // this.markers = [];
 
     } else {
+      this.markers = [];
       this.errMsg();
       console.log("blok");
       this.studentCount = 0;
@@ -694,7 +678,7 @@ export class StudentAttedenceComponent implements OnInit {
           this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
           this.blocksIds.push(sorted[i]['x_axis']);
           this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
-          this.blocks.push(
+          this.markers.push(
             {
               id: sorted[i]['x_axis'],
               name: sorted[i]['block_name'],
@@ -715,21 +699,16 @@ export class StudentAttedenceComponent implements OnInit {
             });
 
         };
-
-        this.markers = this.blocks;
         this.loaderAndErr();
       });
       var element1: any = document.getElementsByClassName('btn-secondary');
       element1[0].style.display = 'block';
-      // element1[1].style.display = 'block';
-      // this.markers = [];
-      this.blocks = [];
       this.blok = false;
-      console.log("myData clicked", data);
     }
   }
 
   myBlockData(data) {
+    this.markers = [];
     this.errMsg();
 
     this.studentCount = 0;
@@ -761,7 +740,7 @@ export class StudentAttedenceComponent implements OnInit {
         console.log({ name: sorted[i]['crc_name'] });
         this.clusterIds.push(sorted[i]['x_axis']);
         this.clusterNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['crc_name'] });
-        this.cluster.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['crc_name'],
@@ -785,21 +764,16 @@ export class StudentAttedenceComponent implements OnInit {
           });
 
       };
-      console.log(this.clusterNames)
-      this.markers = this.cluster;
       this.loaderAndErr();
       this.clust = false;
       this.blok = true;
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
     element1[0].style.display = 'block';
-    // element1[1].style.display = 'block';
-    // this.markers = [];
-    this.cluster = [];
-    console.log("myData clicked", data);
   }
 
   myClusterData(data) {
+    this.markers = [];
     this.errMsg();
     var distId = localStorage.getItem('dist');
 
@@ -819,7 +793,6 @@ export class StudentAttedenceComponent implements OnInit {
       this.lat = Number(this.mylatlngData[0]['y_value']);
       this.lng = Number(this.mylatlngData[0]['z_value']);
 
-      this.schools = [];
       this.clusterIds = [];
 
       var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
@@ -829,9 +802,9 @@ export class StudentAttedenceComponent implements OnInit {
       for (var i = 0; i < sorted.length; i++) {
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        
+
         // this.schoolsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
-        this.schools.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['schoolName'],
@@ -855,17 +828,12 @@ export class StudentAttedenceComponent implements OnInit {
           });
       };
       this.schoolCount = this.schools.length;
-      this.markers = this.schools;
       this.loaderAndErr();
       this.skul = false;
       this.blok = true;
     });
     var element1: any = document.getElementsByClassName('btn-secondary');
     element1[0].style.display = 'block';
-    // element1[1].style.display = 'block';
-    // this.markers = [];
-    this.schools = [];
-    console.log("myData clicked", data);
   }
 
   color() {

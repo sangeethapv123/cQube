@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { latLng, tileLayer, icon, marker } from 'leaflet';
+import { latLng, tileLayer, icon, marker, Marker } from 'leaflet';
 import { google } from "google-maps";
 import { AppServiceComponent } from '../app.service';
 import { Router } from '@angular/router';
@@ -11,10 +11,12 @@ var globalMap;
 @Component({
   selector: 'app-map-view',
   templateUrl: './map-view.component.html',
-  styleUrls: ['./map-view.component.css']
+  styleUrls: ['./map-view.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapViewComponent implements OnInit {
   public title: string = '';
+  public titleName: string = '';
   public districts: any = [];
   public blocks: any = [];
   public cluster: any = [];
@@ -23,48 +25,48 @@ export class MapViewComponent implements OnInit {
   public blocksIds: any = [];
   public clusterIds: any = [];
   public schoolsIds: any = [];
+  public districtsNames: any = [];
   public blocksNames: any = [];
-
+  public clusterNames: any = [];
+  public schoolsNames: any = [];
+  public stylesFile = "../assets/mapStyles.json";
+  public id: any = '';
+  public blockHidden: boolean = true;
+  public clusterHidden: boolean = true;
+  public myDistrict: any;
+  public myBlock: any;
+  public myCluster: any;
   public colors: any;
   public studentCount: any;
   public schoolCount: any;
   public dateRange: any = '';
-  public id = '';
-  public districtsNames: any = [];
-  public clusterNames: any = [];
-  myDistrict: any;
-  zoom: number = 7;
-  public blockHidden: boolean = true;
-  public clusterHidden: boolean = true;
+  public dist: boolean = false;
+  public blok: boolean = false;
+  public clust: boolean = false;
+  public skul: boolean = false;
 
-  markerList:any;
+  public styles: any = [];
 
-  titleName: any;
-  dist: boolean = false;
-  blok: boolean = false;
-  clust: boolean = false;
-  skul: boolean = false;
+  // google maps zoom level
+  public zoom: number = 7;
 
-  lat: any;
-  lng: any;
-  lati: any;
-  longi: any;
+  public labelOptions: any = {};
+
+  // initial center position for the map
+  public lat: any;
+  public lng: any;
+
   public markers: any = [];
+
   public mylatlngData: any = [];
-  public LatlongList: any = [];
 
-  
-
-  constructor(public http: HttpClient, public service: AppServiceComponent, public router: Router) { }
+  constructor(public http: HttpClient, public service: AppServiceComponent, public router: Router, private changeDetection: ChangeDetectorRef) { }
 
   async ngOnInit() {
     this.initMap();
     this.districtWise();
-
   }
-  
 
-  
   //Initialisation of Map  
   initMap() {
     const lat = 22.790988462301428;
@@ -84,36 +86,67 @@ export class MapViewComponent implements OnInit {
 
     }).addTo(globalMap);
   }
-  markersList = new L.FeatureGroup();
-  markerList1=new L.FeatureGroup();
-  markerList2 = new L.FeatureGroup();
-  markerList3 = new L.FeatureGroup();
 
-  //District-Wise
-  districtWise() {
-    this.districtsNames = [];
-    this.blockHidden = true;
-    this.clusterHidden = true;
-    
+  public markersList = new L.FeatureGroup();
+  public markersList1 = new L.FeatureGroup();
+  public markersList2 = new L.FeatureGroup();
+  public markersList3 = new L.FeatureGroup();
+  public markersList4 = new L.FeatureGroup();
+  public markersList5 = new L.FeatureGroup();
+  public markersList6 = new L.FeatureGroup();
+  public markersList7 = new L.FeatureGroup();
+  public markersList8 = new L.FeatureGroup();
 
+
+  loaderAndErr() {
+    if (this.markers.length !== 0) {
+      document.getElementById('spinner').style.display = 'none';
+    } else {
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('errMsg').style.color = 'red';
+      document.getElementById('errMsg').style.display = 'block';
+      document.getElementById('errMsg').innerHTML = 'No data found';
+    }
+  }
+
+  errMsg() {
     document.getElementById('errMsg').style.display = 'none';
     document.getElementById('spinner').style.display = 'block';
     document.getElementById('spinner').style.marginTop = '3%';
+  }
+
+  districtWise() {
+    globalMap.removeLayer(this.markersList);
+    globalMap.removeLayer(this.markersList1);
+    globalMap.removeLayer(this.markersList2);
+    globalMap.removeLayer(this.markersList3);
+    globalMap.removeLayer(this.markersList4);
+    globalMap.removeLayer(this.markersList5);
+    globalMap.removeLayer(this.markersList6);
+    globalMap.removeLayer(this.markersList7);
+    globalMap.removeLayer(this.markersList8);
+    console.log(this.markersList);
+    this.blockHidden = true;
+    this.clusterHidden = true;
+
+    this.errMsg();
     this.title = "State";
     this.titleName = "Gujarat"
+    this.districtsNames = [];
     this.service.dist_wise_data().subscribe(res => {
-     
+      this.mylatlngData = res;
+
       this.lat = 22.790988462301428;
       this.lng = 72.02733294142871;
-      this.zoom = 7;
-     
-      this.mylatlngData = res;
+
+
       this.dist = true;
       this.blok = false;
       this.clust = false;
       this.skul = false;
+
       var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
-      let colors = this.color().generateGradient('#FF0000', '#336600', sorted.length, 'rgb');
+      let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
       this.colors = colors;
       this.studentCount = 0;
       this.schoolCount = 0;
@@ -123,7 +156,7 @@ export class MapViewComponent implements OnInit {
         this.districtsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['district_name'] });
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        this.districts.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             name: sorted[i]['district_name'],
@@ -132,100 +165,88 @@ export class MapViewComponent implements OnInit {
             lng: sorted[i]['z_value'],
             stdCount: sorted[i]['students_count'],
             schCount: sorted[i]['total_schools'],
-          
+
           });
-      };
-      
-
-      this.markers = this.districts;
-      if (this.markers.length !== 0) {
-        for (let i = 0; i < this.markers.length; i++) {
-
-         var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
-           radius:5,
-            draggable: true,
+        if (this.dist === true) {
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng, this.markers[i].id], {
+            radius: 5,
             color: this.colors[i],
             fillColor: this.colors[i],
             fillOpacity: 1,
             strokeWeight: 0.01
-
-           
-          })
-
+          });
+          globalMap.setZoom(7);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance : </b>" + this.markers[i].label + "%"+
-            "<br><b>District: </b>" + this.markers[i].name +
-            "<br><b>Number of schools:</b>"+this.markers[i].schCount +
-            "<br><b>Number of students:</b>" +this.markers[i].stdCount);
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
           this.markersList.addLayer(marker);
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e.latlng.alt);
+          });
 
         }
-       globalMap.addLayer(this.markersList);
-        document.getElementById('spinner').style.display = 'none';
 
-
-      } else {
-        setTimeout(() => {
-          document.getElementById('spinner').style.display = 'none';
-          document.getElementById('errMsg').style.color = 'red';
-          document.getElementById('errMsg').style.display = 'block';
-          document.getElementById('errMsg').innerHTML = 'No data found';
-        }, 20000);
-      }
+      };
+      globalMap.addLayer(this.markersList);
+      console.log(this.markersList);
+      this.loaderAndErr();
+      this.changeDetection.markForCheck();
     });
+
     var element1: any = document.getElementsByClassName('btn-secondary');
     element1[0].style.display = 'none';
     this.districts = [];
-    this.studentCount=0;
-    this.schoolCount=0;
+    this.studentCount = 0;
+    this.schoolCount = 0;
     this.service.schoolCount().subscribe(res => {
       this.schoolCount = res[0]['total_schools'];
     });
 
   }
-//District-Wise Data end 
 
- //Block-wise Data
+  blockWise() {
+    globalMap.removeLayer(this.markersList);
+    globalMap.removeLayer(this.markersList2);
+    globalMap.removeLayer(this.markersList3);
+    globalMap.removeLayer(this.markersList4);
+    globalMap.removeLayer(this.markersList5);
+    globalMap.removeLayer(this.markersList6);
+    globalMap.removeLayer(this.markersList7);
+    this.blockHidden = true;
+    this.clusterHidden = true;
+    this.myDistrict = {};
+    this.errMsg();
+    this.title = "State";
+    this.titleName = "Gujarat"
+    this.service.block_wise_data().subscribe(res => {
+      this.mylatlngData = res;
+      this.lat = 22.790988462301428;
+      this.lng = 72.02733294142871;
 
-blockWise() {
-
-  this.blockHidden = true;
-  this.clusterHidden = true;
-  this.markers = [];
-  
-  
-
-  globalMap.removeLayer(this.markersList);
-  globalMap.removeLayer(this.markerList1);
-  globalMap.removeLayer(this.markerList2);
-  document.getElementById('errMsg').style.display = 'none';
-  document.getElementById('spinner').style.display = 'block';
-  document.getElementById('spinner').style.marginTop = '3%';
-  this.title = "State";
-  this.titleName = "Gujarat"
-  this.service.block_wise_data().subscribe(res => {
-    this.mylatlngData = res;
-    this.lat = 22.790988462301428;
-    this.lng = 72.02733294142871;
-    this.zoom = 7;
-    this.dist = false;
-    this.blok = true;
-    this.clust = false;
-    this.skul = false;
-    
-    this.blocksNames=[]
-    this.studentCount = 0;
-    this.schoolCount = 0;
-
-    var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
-      let colors = this.color().generateGradient('#FF0000', '#336600', sorted.length, 'rgb');
+      this.dist = false;
+      this.blok = true;
+      this.clust = false;
+      this.skul = false;
+      this.blocksNames = [];
+      this.studentCount = 0;
+      this.schoolCount = 0;
+      var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+      let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
       this.colors = colors;
       for (var i = 0; i < sorted.length; i++) {
-        this.blocksIds.push(sorted[i]['x_axis']);
-        this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
+        // this.blocksIds.push(sorted[i]['x_axis']);
         this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
         this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-        this.blocks.push(
+        this.markers.push(
           {
             id: sorted[i]['x_axis'],
             dist: sorted[i]['district_name'],
@@ -235,282 +256,984 @@ blockWise() {
             lng: sorted[i]['z_value'],
             stdCount: sorted[i]['students_count'],
             schCount: sorted[i]['total_schools'],
-            // icon: {
-            //   path: google.maps.SymbolPath.CIRCLE,
-            //   scale: 5.5,
-            //   fillColor: this.colors[i],
-            //   fillOpacity: 1,
-            //   strokeWeight: 0.01
-            // }
+            blok: this.blok,
+
           });
+        if (this.blok === true) {
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          });
+
+          globalMap.setZoom(7);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+            "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
+
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList1.addLayer(marker);
+        }
       };
+      globalMap.addLayer(this.markersList1);
+      this.loaderAndErr();
+      this.changeDetection.markForCheck();
+    });
+    var element1: any = document.getElementsByClassName('btn-secondary');
+    element1[0].style.display = 'Block';
+    this.blocks = [];
+  }
 
-    this.markers = this.blocks;
-    if (this.markers.length !== 0) {
-      for (let i = 0; i < this.markers.length; i++) {
-       // console.log(this.markers[i].markerList.options.color)
-       var marker= L.circleMarker([this.markers[i].lat, this.markers[i].lng],{
-        radius:5,
-        draggable: true,
-        color: this.colors[i],
-        fillColor: this.colors[i],
-        fillOpacity: 1,
-        strokeWeight: 0.01
+  schoolWise() {
+    globalMap.removeLayer(this.markersList1);
+    globalMap.removeLayer(this.markersList);
+    globalMap.removeLayer(this.markersList3);
+    globalMap.removeLayer(this.markersList4);
+    globalMap.removeLayer(this.markersList5);
+    globalMap.removeLayer(this.markersList6);
+    globalMap.removeLayer(this.markersList7);
+    globalMap.removeLayer(this.markersList8);
+    this.markers = [];
+    this.blockHidden = true;
+    this.clusterHidden = true;
+    this.myDistrict = {};
+    this.errMsg();
+    this.title = "State";
+    this.titleName = "Gujarat"
+    this.service.school_wise_data().subscribe(res => {
+      this.mylatlngData = res;
 
-          })
-          marker.addTo(globalMap).bindPopup(
-            "<b>Attendance:</b>" + this.markers[i].label+"%" 
-          + "<br><b>District: </b>" +this.markers[i].dist +
-          "<br><b> Block: </b>" +this.markers[i].name+
-          "<br><b>Number of schools:</b>"+this.markers[i].schCount +
-          "<br> <b>Number of Students:</b>" +this.markers[i].stdCount);
-                       this.markerList1.addLayer(marker);       
-
-        }
-        globalMap.addLayer(this.markerList1);
-
-      document.getElementById('spinner').style.display = 'none';
-
-
-    } else {
-      setTimeout(() => {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('errMsg').style.color = 'red';
-        document.getElementById('errMsg').style.display = 'block';
-        document.getElementById('errMsg').innerHTML = 'No data found';
-      }, 20000);
-    }
-  });
-  var element1: any = document.getElementsByClassName('btn-secondary');
-  element1[0].style.display = 'Block';
-  this.blocks = [];
-}
-//Block-wise Data end
-
-//Cluster-wise Data
+      this.lat = 22.790988462301428;
+      this.lng = 72.02733294142871;
 
 
-clusterWise() {
-  this.blockHidden = true;
-  this.clusterHidden = true;
+      this.dist = false;
+      this.blok = false;
+      this.clust = false;
+      this.skul = true;
 
-  this.markers = [];
-  globalMap.removeLayer(this.markersList);
-  globalMap.removeLayer(this.markerList1);
-  globalMap.removeLayer(this.markerList2);
-  globalMap.removeLayer(this.markerList3);
+      var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+      let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+      this.colors = colors;
+      for (var i = 0; i < sorted.length; i++) {
+        // this.districtsIds.push(sorted[i]['x_axis']);
+        this.markers.push(
+          {
+            id: sorted[i]['x_axis'],
+            cluster: sorted[i]['cluster_name'],
+            dist: sorted[i]['district_name'],
+            block: sorted[i]['block_name'],
+            name: sorted[i]['school_name'],
+            label: sorted[i]['x_value'],
+            lat: sorted[i]['y_value'],
+            lng: sorted[i]['z_value'],
+            stdCount: sorted[i]['students_count'],
+            schCount: sorted[i]['total_schools'],
 
-  document.getElementById('errMsg').style.display = 'none';
-  document.getElementById('spinner').style.display = 'block';
-  document.getElementById('spinner').style.marginTop = '3%';
-  this.title = "State";
-  this.titleName = "Gujarat"
-  this.service.cluster_wise_data().subscribe(res => {
-    this.mylatlngData = res;
-    this.lat = 22.790988462301428;
-    this.lng = 72.02733294142871;
-    this.zoom = 7;
-    this.dist = false;
-    this.blok = false;
-    this.clust = true;
-    this.skul = false;
-    this.studentCount = 0;
-    this.schoolCount = 0;
-
-    var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
-    let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
-    this.colors = colors;
-    for (var i = 0; i < sorted.length; i++) {
-      this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
-      this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
-      this.clusterIds.push(sorted[i]['x_axis']);
-      this.cluster.push(
-        {
-          id: sorted[i]['x_axis'],
-          name: sorted[i]['crc_name'],
-          dist: sorted[i]['district_name'],
-          blockId: sorted[i]['block_name'],
-          label: sorted[i]['x_value'],
-          lat: sorted[i]['y_value'],
-          lng: sorted[i]['z_value'],
-          stdCount: sorted[i]['students_count'],
-          schCount: sorted[i]['total_schools'],
-          // icon: {
-          //   path: google.maps.SymbolPath.CIRCLE,
-          //   scale: 4.5,
-          //   fillColor: this.colors[i],
-          //   fillOpacity: 1,
-          //   strokeWeight: 0.01
-          // }
-        });
-    };
-    console.log(this.cluster);
-
-    this.markers = this.cluster;
-    if (this.markers.length !== 0) {
-      for (let i = 0; i < this.markers.length; i++) {
-       // console.log(this.markers[i].markerList.options.color)
-       var marker= L.circleMarker([this.markers[i].lat, this.markers[i].lng],{
-        radius:5,
-        draggable: true,
-        color: this.colors[i],
-        fillColor: this.colors[i],
-        fillOpacity: 1,
-        strokeWeight: 0.01
-
-          })
-          marker.addTo(globalMap).bindPopup(
-            "<b>Attendance:</b>" + this.markers[i].label+"%" 
-          + "<br><b>District: </b>" +this.markers[i].dist +
-          "<br><b>Block:</b>"+this.markers[i].blockId+
-          "<br><b>Cluster(CRC) </b>"+this.markers[i].name +
-          "<br><b>Number of schools:</b>"+this.markers[i].schCount +
-          "<br> <b>Number of Students:</b>" +this.markers[i].stdCount);
-          this.markerList2.addLayer(marker);
-
-        }
-        globalMap.addLayer(this.markerList2);
-      document.getElementById('spinner').style.display = 'none';
-
-
-    } else {
-      setTimeout(() => {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('errMsg').style.color = 'red';
-        document.getElementById('errMsg').style.display = 'block';
-        document.getElementById('errMsg').innerHTML = 'No data found';
-      }, 20000);
-    }
-  });
-  var element1: any = document.getElementsByClassName('btn-secondary');
-  element1[0].style.display = 'Block';
-  this.cluster = [];
-}
-  
-//Cluster-wise Data end
-
-
-//School-wise Data
-schoolWise() {
-  console.log('school-wise')
-  this.blockHidden = true;
-  this.clusterHidden = true;
-  this.markers = [];
-  
-  globalMap.removeLayer(this.markersList);
-  globalMap.removeLayer(this.markerList2);
-  globalMap.removeLayer(this.markerList1);
-
-  document.getElementById('errMsg').style.display = 'none';
-  document.getElementById('spinner').style.display = 'block';
-  document.getElementById('spinner').style.marginTop = '3%';
-  this.title = "State";
-  this.titleName = "Gujarat"
-  this.service.school_wise_data().subscribe(res => {
-
-    this.mylatlngData = res;
-    this.lat = 22.790988462301428;
-    this.lng = 72.02733294142871;
-    this.zoom = 7;
-
-    this.dist = false;
-    this.blok = false;
-    this.clust = false;
-    this.skul = true;
-   
-    var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
-    let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
-    this.colors = colors;
-    
-    for (var i = 0; i < sorted.length; i++) {
-      this.districtsIds.push(sorted[i]['x_axis']);
-      this.schools.push(
-        {
-          id: sorted[i]['x_axis'],
-          dist: sorted[i]['district_name'],
-          name: sorted[i]['school_name'],
-          label: sorted[i]['x_value'],
-          lat: sorted[i]['y_value'],
-          lng: sorted[i]['z_value'],
-          stdCount: sorted[i]['students_count'],
-          schCount: sorted[i]['total_schools'],
-         
-
-          // icon: {
-          //   path: google.maps.SymbolPath.CIRCLE,
-          //   scale: 3.5,
-          //   fillColor: this.colors[i],
-          //   fillOpacity: 1,
-          //   strokeWeight: 0.01
-          // }
-        });
-    };
-
-    
-    console.log(this.schools);
-    this.markers = this.schools;
-    console.log(this.markers);
-    if (this.markers.length !== 0) {
-      for (let i = 0; i < this.markers.length; i++) {
-
+          });
         var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
-          radius:5,
-          draggable: true,
+          radius: 5,
           color: this.colors[i],
           fillColor: this.colors[i],
           fillOpacity: 1,
           strokeWeight: 0.01
-          
-         })
+        })
+        globalMap.setZoom(7);
+        marker.addTo(globalMap).bindPopup(
+          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+          "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+          "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].cluster +
+          "<br><b>School: </b>" + "&nbsp;" + this.markers[i].name +
+          "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+        );
 
-         marker.addTo(globalMap).bindPopup(
-           "<b>Attendance : </b>" + this.markers[i].label + 
-           "<br><b>District: </b>" + this.markers[i].dist+
-           "<br><b>Block:</b>"+''+
-           "<br><b>Cluster (CRC):</b>"+''+
-            "<br><b>School:</b>" +this.markers[i].name +
-           "<br><b>Number of students :</b>" +this.markers[i].stdCount);
-        this.markerList3.addLayer(marker)
-       }
-       globalMap.addLayer(this.markerList3)
-       document.getElementById('spinner').style.display = 'none';
+        marker.on('mouseover', function (e) {
+          this.openPopup();
+        });
+        marker.on('mouseout', function (e) {
+          this.closePopup();
+        });
+        marker.on('click', function (e) {
+          console.log(e);
+        });
+        this.markersList2.addLayer(marker);
+      };
+      globalMap.addLayer(this.markersList2);
+      this.loaderAndErr();
+      this.changeDetection.markForCheck();
+    });
+    var element1: any = document.getElementsByClassName('btn-secondary');
+    element1[0].style.display = 'block';
+    this.schools = [];
+  }
 
-    } else {
-      setTimeout(() => {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('errMsg').style.color = 'red';
-        document.getElementById('errMsg').style.display = 'block';
-        document.getElementById('errMsg').innerHTML = 'No data found';
-      }, 20000);
+  clusterWise() {
+    globalMap.removeLayer(this.markersList1);
+    globalMap.removeLayer(this.markersList2);
+    globalMap.removeLayer(this.markersList);
+    globalMap.removeLayer(this.markersList4);
+    globalMap.removeLayer(this.markersList5);
+    globalMap.removeLayer(this.markersList6);
+    globalMap.removeLayer(this.markersList7);
+    globalMap.removeLayer(this.markersList8);
+    this.markers = [];
+    this.blockHidden = true;
+    this.clusterHidden = true;
+    this.myDistrict = {};
+    this.errMsg();
+    this.title = "State";
+    this.titleName = "Gujarat"
+    this.service.cluster_wise_data().subscribe(res => {
+      this.mylatlngData = res;
+      this.lat = 22.790988462301428;
+      this.lng = 72.02733294142871;
+
+      this.dist = false;
+      this.blok = false;
+      this.clust = true;
+      this.skul = false;
+      this.studentCount = 0;
+      this.schoolCount = 0;
+
+      var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+      let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+      this.colors = colors;
+      for (var i = 0; i < sorted.length; i++) {
+        this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+        this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+        // this.clusterIds.push(sorted[i]['x_axis']);
+        this.markers.push(
+          {
+            id: sorted[i]['x_axis'],
+            name: sorted[i]['crc_name'],
+            dist: sorted[i]['district_name'],
+            block: sorted[i]['block_name'],
+            label: sorted[i]['x_value'],
+            lat: sorted[i]['y_value'],
+            lng: sorted[i]['z_value'],
+            stdCount: sorted[i]['students_count'],
+            schCount: sorted[i]['total_schools'],
+            clust: this.clust,
+
+          });
+        var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+          radius: 5,
+          color: this.colors[i],
+          fillColor: this.colors[i],
+          fillOpacity: 1,
+          strokeWeight: 0.01
+        })
+        globalMap.setZoom(7);
+        marker.addTo(globalMap).bindPopup(
+          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+          "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+          "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
+          "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+          "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+        );
+
+        marker.on('mouseover', function (e) {
+          this.openPopup();
+        });
+        marker.on('mouseout', function (e) {
+          this.closePopup();
+        });
+        marker.on('click', function (e) {
+          console.log(e);
+        });
+        this.markersList3.addLayer(marker);
+      };
+      globalMap.addLayer(this.markersList3);
+      this.loaderAndErr();
+      this.changeDetection.markForCheck();
+    });
+    var element1: any = document.getElementsByClassName('btn-secondary');
+    element1[0].style.display = 'Block';
+    this.cluster = [];
+  }
+
+
+  clickedMarker(label) {
+
+    if (this.districtsIds.includes(label[2])) {
+      globalMap.removeLayer(this.markersList1);
+      globalMap.removeLayer(this.markersList2);
+      globalMap.removeLayer(this.markersList3);
+      globalMap.removeLayer(this.markersList);
+      globalMap.removeLayer(this.markersList5);
+      globalMap.removeLayer(this.markersList6);
+      globalMap.removeLayer(this.markersList7);
+      globalMap.removeLayer(this.markersList8);
+      this.markers = [];
+      this.blockHidden = true;
+      this.clusterHidden = true;
+
+      this.studentCount = 0;
+      this.schoolCount = 0;
+
+
+      this.errMsg();
+
+      this.title = "District";
+      this.titleName = label[1];
+
+      localStorage.setItem('dist', label[1]);
+      this.service.blockPerDist(label[2]).subscribe(res => {
+        this.dist = false;
+        this.blok = true;
+        this.clust = false;
+        this.skul = false;
+
+        this.mylatlngData = res;
+
+        this.lat = Number(label[3]);
+        this.lng = Number(label[4]);
+        this.blocksNames = [];
+
+        var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+        let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+        this.colors = colors;
+
+        for (var i = 0; i < sorted.length; i++) {
+          this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+          this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+          this.blocksIds.push(sorted[i]['x_axis']);
+          this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
+
+          this.markers.push(
+            {
+              id: sorted[i]['x_axis'],
+              name: sorted[i]['block_name'],
+              dist: sorted[i]['distName'],
+              label: sorted[i]['x_value'],
+              lat: sorted[i]['y_value'],
+              lng: sorted[i]['z_value'],
+              stdCount: sorted[i]['students_count'],
+              schCount: sorted[i]['total_schools'],
+              blok: this.blok,
+
+            });
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          })
+          globalMap.setZoom(8);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+            "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
+
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList4.addLayer(marker);
+        };
+        globalMap.addLayer(this.markersList4);
+        this.loaderAndErr();
+        this.changeDetection.markForCheck();
+      });
+      var element1: any = document.getElementsByClassName('btn-secondary');
+      element1[0].style.display = 'block';
+      this.blocks = [];
     }
-  });
-  var element1: any = document.getElementsByClassName('btn-secondary');
-  element1[0].style.display = 'block';
-  this.schools = [];
-}
- 
-//School-wise Data end
-  
-// myDistrictData
+
+    if (this.blocksIds.includes(label[2])) {
+      globalMap.removeLayer(this.markersList1);
+      globalMap.removeLayer(this.markersList2);
+      globalMap.removeLayer(this.markersList3);
+      globalMap.removeLayer(this.markersList4);
+      globalMap.removeLayer(this.markersList);
+      globalMap.removeLayer(this.markersList6);
+      globalMap.removeLayer(this.markersList7);
+      globalMap.removeLayer(this.markersList8);
+      this.blockHidden = true;
+      this.clusterHidden = true;
+
+      this.markers = [];
+      this.errMsg();
+
+      this.studentCount = 0;
+      this.schoolCount = 0;
+      this.title = "Block";
+      this.titleName = label[1];
+      this.service.clusterPerBlock(label[2]).subscribe(res => {
+
+        this.dist = false;
+        this.blok = false;
+        this.clust = true;
+        this.skul = false;
+
+        this.mylatlngData = res;
+        ;
+        this.lat = Number(label[3]);
+        this.lng = Number(label[4]);
+
+        this.clusterIds = [];
+        var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+        let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+        this.colors = colors;
+        for (var i = 0; i < sorted.length; i++) {
+          this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+          this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+          this.clusterIds.push(sorted[i]['x_axis']);
+          this.clusterNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['crc_name'] });
+
+          this.markers.push(
+            {
+              id: sorted[i]['x_axis'],
+              name: sorted[i]['crc_name'],
+              // name: sorted[i][''],
+              dist: sorted[i]['distName'],
+              block: sorted[i]['blockName'],
+              label: sorted[i]['x_value'],
+              lat: sorted[i]['y_value'],
+              lng: sorted[i]['z_value'],
+              stdCount: sorted[i]['students_count'],
+              schCount: sorted[i]['total_schools'],
+              clust: this.clust,
+              blok: this.blok,
+
+            });
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          })
+          globalMap.setZoom(9);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+            "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+            "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
+
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList5.addLayer(marker);
+        };
+        globalMap.addLayer(this.markersList5);
+        this.loaderAndErr();
+        this.changeDetection.markForCheck();
+        this.clust = false;
+        this.blok = true;
+      });
+      var element1: any = document.getElementsByClassName('btn-secondary');
+      element1[0].style.display = 'block';
+    }
+
+    if (this.clusterIds.includes(label[2])) {
+      globalMap.removeLayer(this.markersList1);
+      globalMap.removeLayer(this.markersList2);
+      globalMap.removeLayer(this.markersList3);
+      globalMap.removeLayer(this.markersList4);
+      globalMap.removeLayer(this.markersList5);
+      globalMap.removeLayer(this.markersList);
+      globalMap.removeLayer(this.markersList7);
+      globalMap.removeLayer(this.markersList8);
+      this.blockHidden = true;
+      this.clusterHidden = true;
 
 
+      this.markers = [];
+      this.errMsg();
+      this.studentCount = 0;
+      this.schoolCount = 0;
+      this.title = "Cluster";
+      this.titleName = label[1] + "(crc)";
+      this.service.schoolsPerCluster(label[2]).subscribe(res => {
 
+        this.dist = false;
+        this.blok = false;
+        this.clust = false;
+        this.skul = true;
+        this.mylatlngData = res;
+        ;
+        this.lat = Number(label[3]);
+        this.lng = Number(label[4]);
 
-//myDistrictDataEnd
+        var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+        let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+        this.colors = colors;
 
-//myBlockData
+        for (var i = 0; i < sorted.length; i++) {
+          this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+          this.markers.push(
+            {
+              id: sorted[i]['x_axis'],
+              name: sorted[i]['schoolName'],
+              block: sorted[i]['blockName'],
+              dist: sorted[i]['distName'],
+              cluster: sorted[i]['crc'].toUpperCase(),
+              label: sorted[i]['x_value'],
+              lat: sorted[i]['y_value'],
+              lng: sorted[i]['z_value'],
+              stdCount: sorted[i]['students_count'],
+              schCount: sorted[i]['total_schools'],
+              skul: this.skul,
+              blok: this.blok,
 
-//myBlockDataEnd
+            });
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          })
+          globalMap.setZoom(9.5);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+            "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+            "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].cluster +
+            "<br><b>School: </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
 
-//myClusterData
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList6.addLayer(marker);
+        };
+        globalMap.addLayer(this.markersList6);
+        this.schoolCount = this.markers.length;
+        this.loaderAndErr();
+        this.changeDetection.markForCheck();
+        this.skul = false;
+        this.blok = true;
+      });
+      var element1: any = document.getElementsByClassName('btn-secondary');
+      element1[0].style.display = 'block';
+    }
+  };
 
+  //Showing tooltips on markers on mouse hover...
+  onMouseOver(m, infowindow) {
+    m.lastOpen = infowindow;
+    m.lastOpen.open();
+  }
 
-//myClusterDataEnd
+  //Hide tooltips on markers on mouse hover...
+  hideInfo(m) {
+    if (m.lastOpen != null) {
+      m.lastOpen.close();
+    }
+  }
 
 
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('dist');
     this.router.navigate(['/']);
+  }
+
+  myDistData(data) {
+    if (this.clust === true) {
+      globalMap.removeLayer(this.markersList1);
+      globalMap.removeLayer(this.markersList2);
+      globalMap.removeLayer(this.markersList3);
+      globalMap.removeLayer(this.markersList4);
+      globalMap.removeLayer(this.markersList5);
+      globalMap.removeLayer(this.markersList6);
+      globalMap.removeLayer(this.markersList);
+      globalMap.removeLayer(this.markersList8);
+      this.markers = [];
+      this.errMsg();
+
+      this.title = "Dist";
+      this.titleName = data.name;
+
+      localStorage.setItem('dist', data.name);
+      this.service.clusterPerDist(data.id).subscribe(res => {
+        this.clusterHidden = true;
+        this.blockHidden = false;
+        this.dist = false;
+        this.blok = false;
+        this.clust = true;
+        this.skul = false;
+
+        this.mylatlngData = res;
+        this.blocksNames = [];
+
+        this.lat = Number(this.mylatlngData[5]['y_value']);
+        this.lng = Number(this.mylatlngData[5]['z_value']);
+        this.studentCount = 0;
+        this.schoolCount = 0;
+
+        var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+        let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+        this.colors = colors;
+
+        for (var i = 0; i < sorted.length; i++) {
+          this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+          this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+          this.clusterIds.push(sorted['x_axis']);
+          this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['blockName'] });
+          this.markers.push(
+            {
+              id: sorted[i]['x_axis'],
+              name: sorted[i]['crc_name'],
+              // name: sorted[i][''],
+              dist: sorted[i]['distName'],
+              block: sorted[i]['blockName'],
+              label: sorted[i]['x_value'],
+              lat: sorted[i]['y_value'],
+              lng: sorted[i]['z_value'],
+              stdCount: sorted[i]['students_count'],
+              schCount: sorted[i]['total_schools'],
+              clust: this.clust,
+
+            });
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          })
+          globalMap.setZoom(8.5);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+            "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+            "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
+
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList7.addLayer(marker);
+
+        };
+        globalMap.addLayer(this.markersList7);
+        this.loaderAndErr();
+        this.changeDetection.markForCheck();
+      });
+      var element1: any = document.getElementsByClassName('btn-secondary');
+      element1[0].style.display = 'block';
+      this.cluster = [];
+      this.clust = false;
+
+    } else if (this.skul === true) {
+      globalMap.removeLayer(this.markersList1);
+      globalMap.removeLayer(this.markersList2);
+      globalMap.removeLayer(this.markersList3);
+      globalMap.removeLayer(this.markersList4);
+      globalMap.removeLayer(this.markersList5);
+      globalMap.removeLayer(this.markersList6);
+      globalMap.removeLayer(this.markersList7);
+      globalMap.removeLayer(this.markersList);
+      this.markers = [];
+      this.clusterHidden = true;
+      this.blockHidden = false;
+      this.errMsg();
+
+      this.title = "Cluster";
+      this.titleName = data.name;
+      localStorage.setItem('dist', data.name);
+      this.service.schoolPerDist(data.id).subscribe(res => {
+        this.dist = false;
+        this.blok = false;
+        this.clust = false;
+        this.skul = true;
+        this.blocksNames = [];
+
+        this.mylatlngData = res;
+
+
+        this.studentCount = 0;
+        this.schoolCount = 0;
+        var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+        let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+        this.colors = colors;
+
+        for (var i = 0; i < sorted.length; i++) {
+          this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+          this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+          this.schoolsIds.push(sorted[i]['x_axis']);
+          this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
+          this.markers.push(
+            {
+              id: sorted[i]['x_axis'],
+              name: sorted[i]['schoolName'],
+              blockId: sorted[i]['blockName'],
+              dist: sorted[i]['distName'],
+              clusterId: sorted[i]['crc'].toUpperCase(),
+              label: sorted[i]['x_value'],
+              lat: sorted[i]['y_value'],
+              lng: sorted[i]['z_value'],
+              stdCount: sorted[i]['students_count'],
+              schCount: sorted[i]['total_schools'],
+              skul: this.skul,
+
+            });
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          })
+          globalMap.setZoom(9.5);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
+
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList8.addLayer(marker);
+        };
+        globalMap.addLayer(this.markersList8);
+        this.loaderAndErr();
+        this.changeDetection.markForCheck();
+        this.skul = false;
+      });
+      var element1: any = document.getElementsByClassName('btn-secondary');
+      element1[0].style.display = 'block';
+
+    } else {
+      globalMap.removeLayer(this.markersList1);
+      globalMap.removeLayer(this.markersList2);
+      globalMap.removeLayer(this.markersList3);
+      globalMap.removeLayer(this.markersList4);
+      globalMap.removeLayer(this.markersList);
+      globalMap.removeLayer(this.markersList5);
+      globalMap.removeLayer(this.markersList6);
+      globalMap.removeLayer(this.markersList7);
+      globalMap.removeLayer(this.markersList8);
+      this.markers = [];
+      this.errMsg();
+      console.log("blok");
+      this.studentCount = 0;
+      this.schoolCount = 0;
+      this.title = "District";
+      this.titleName = data.name;
+      localStorage.setItem('dist', data.name);
+      this.service.blockPerDist(data.id).subscribe(res => {
+        this.blockHidden = false;
+        this.clusterHidden = true;
+        this.dist = false;
+        this.blok = true;
+        this.clust = false;
+        this.skul = false;
+
+        this.mylatlngData = res;
+
+        this.lat = Number(this.mylatlngData[0]['y_value']);
+        this.lng = Number(this.mylatlngData[0]['z_value']);
+        this.blocksNames = [];
+
+        var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+        let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+        this.colors = colors;
+
+        for (var i = 0; i < sorted.length; i++) {
+          this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+          this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+          this.blocksIds.push(sorted[i]['x_axis']);
+          this.blocksNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
+          this.markers.push(
+            {
+              id: sorted[i]['x_axis'],
+              name: sorted[i]['block_name'],
+              dist: sorted[i]['distName'],
+              label: sorted[i]['x_value'],
+              lat: sorted[i]['y_value'],
+              lng: sorted[i]['z_value'],
+              stdCount: sorted[i]['students_count'],
+              schCount: sorted[i]['total_schools'],
+              blok: this.blok,
+
+            });
+          var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+            radius: 5,
+            color: this.colors[i],
+            fillColor: this.colors[i],
+            fillOpacity: 1,
+            strokeWeight: 0.01
+          })
+          globalMap.setZoom(8);
+          marker.addTo(globalMap).bindPopup(
+            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+            "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].name +
+            "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+            "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+          );
+
+          marker.on('mouseover', function (e) {
+            this.openPopup();
+          });
+          marker.on('mouseout', function (e) {
+            this.closePopup();
+          });
+          marker.on('click', function (e) {
+            console.log(e);
+          });
+          this.markersList4.addLayer(marker);
+
+        };
+        globalMap.addLayer(this.markersList4);
+        this.loaderAndErr();
+        this.changeDetection.markForCheck();
+      });
+      var element1: any = document.getElementsByClassName('btn-secondary');
+      element1[0].style.display = 'block';
+      this.blok = false;
+    }
+  }
+
+  myBlockData(data) {
+    globalMap.removeLayer(this.markersList1);
+    globalMap.removeLayer(this.markersList2);
+    globalMap.removeLayer(this.markersList3);
+    globalMap.removeLayer(this.markersList4);
+    globalMap.removeLayer(this.markersList5);
+    globalMap.removeLayer(this.markersList6);
+    globalMap.removeLayer(this.markersList7);
+    globalMap.removeLayer(this.markersList8);
+    this.markers = [];
+    this.errMsg();
+
+    this.studentCount = 0;
+    this.schoolCount = 0;
+    this.title = "Block";
+    this.titleName = data.name;
+    localStorage.setItem('dist', data.name);
+    this.service.clusterPerBlock(data.id).subscribe(res => {
+      this.clusterHidden = false;
+      this.blockHidden = false;
+      this.dist = false;
+      this.blok = false;
+      this.clust = true;
+      this.skul = false;
+
+      this.mylatlngData = res;
+      ;
+      this.lat = Number(this.mylatlngData[5]['y_value']);
+      this.lng = Number(this.mylatlngData[5]['z_value']);
+      this.clusterNames = [];
+
+      var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+      let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+      this.colors = colors;
+
+      for (var i = 0; i < sorted.length; i++) {
+        this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+        this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+        console.log({ name: sorted[i]['crc_name'] });
+        this.clusterIds.push(sorted[i]['x_axis']);
+        this.clusterNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['crc_name'] });
+        this.markers.push(
+          {
+            id: sorted[i]['x_axis'],
+            name: sorted[i]['crc_name'],
+            // name: sorted[i][''],
+            dist: sorted[i]['distName'],
+            block: sorted[i]['blockName'],
+            label: sorted[i]['x_value'],
+            lat: sorted[i]['y_value'],
+            lng: sorted[i]['z_value'],
+            stdCount: sorted[i]['students_count'],
+            schCount: sorted[i]['total_schools'],
+            clust: this.clust,
+            blok: this.blok,
+
+          });
+        var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+          radius: 5,
+          color: this.colors[i],
+          fillColor: this.colors[i],
+          fillOpacity: 1,
+          strokeWeight: 0.01
+        })
+        globalMap.setZoom(8.5);
+        marker.addTo(globalMap).bindPopup(
+          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+          "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+          "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
+          "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
+          "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+        );
+
+        marker.on('mouseover', function (e) {
+          this.openPopup();
+        });
+        marker.on('mouseout', function (e) {
+          this.closePopup();
+        });
+        marker.on('click', function (e) {
+          console.log(e);
+        });
+        this.markersList5.addLayer(marker);
+      };
+      globalMap.addLayer(this.markersList5);
+      this.loaderAndErr();
+      this.changeDetection.markForCheck();
+      this.clust = false;
+      this.blok = true;
+    });
+    var element1: any = document.getElementsByClassName('btn-secondary');
+    element1[0].style.display = 'block';
+  }
+
+  myClusterData(data) {
+    globalMap.removeLayer(this.markersList1);
+    globalMap.removeLayer(this.markersList2);
+    globalMap.removeLayer(this.markersList3);
+    globalMap.removeLayer(this.markersList4);
+    globalMap.removeLayer(this.markersList5);
+    globalMap.removeLayer(this.markersList6);
+    globalMap.removeLayer(this.markersList7);
+    globalMap.removeLayer(this.markersList8);
+    this.markers = [];
+    this.errMsg();
+    var distId = localStorage.getItem('dist');
+
+    this.studentCount = 0;
+    this.schoolCount = 0;
+    this.title = "Cluster";
+    this.titleName = data.name;
+    localStorage.setItem('dist', data.name);
+    this.service.schoolsPerCluster(data.id).subscribe(res => {
+      this.dist = false;
+      this.blok = false;
+      this.clust = false;
+      this.skul = true;
+
+      this.mylatlngData = res;
+      ;
+      this.lat = Number(this.mylatlngData[0]['y_value']);
+      this.lng = Number(this.mylatlngData[0]['z_value']);
+
+      this.clusterIds = [];
+
+      var sorted = this.mylatlngData.sort((a, b) => (a.x_value > b.x_value) ? 1 : -1)
+      let colors = this.color().generateGradient('#FF0000', '#7FFF00', sorted.length, 'rgb');
+      this.colors = colors;
+
+      for (var i = 0; i < sorted.length; i++) {
+        this.studentCount = this.studentCount + Number(sorted[i]['students_count']);
+        this.schoolCount = this.schoolCount + Number(sorted[i]['total_schools']);
+
+        // this.schoolsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['block_name'] });
+        this.markers.push(
+          {
+            id: sorted[i]['x_axis'],
+            name: sorted[i]['schoolName'],
+            block: sorted[i]['blockName'],
+            dist: sorted[i]['distName'],
+            cluster: sorted[i]['crc'].toUpperCase(),
+            label: sorted[i]['x_value'],
+            lat: sorted[i]['y_value'],
+            lng: sorted[i]['z_value'],
+            stdCount: sorted[i]['students_count'],
+            schCount: sorted[i]['total_schools'],
+            skul: this.skul,
+            blok: this.blok,
+
+          });
+        var marker = L.circleMarker([this.markers[i].lat, this.markers[i].lng], {
+          radius: 5,
+          color: this.colors[i],
+          fillColor: this.colors[i],
+          fillOpacity: 1,
+          strokeWeight: 0.01
+        })
+        globalMap.setZoom(9.5);
+        marker.addTo(globalMap).bindPopup(
+          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
+          "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
+          "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].cluster +
+          "<br><b>School: </b>" + "&nbsp;" + this.markers[i].name +
+          "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
+        );
+
+        marker.on('mouseover', function (e) {
+          this.openPopup();
+        });
+        marker.on('mouseout', function (e) {
+          this.closePopup();
+        });
+        marker.on('click', function (e) {
+          console.log(e);
+        });
+        this.markersList6.addLayer(marker);
+      };
+      globalMap.addLayer(this.markersList6);
+      this.schoolCount = this.schools.length;
+      this.loaderAndErr();
+      this.changeDetection.markForCheck();
+      this.skul = false;
+      this.blok = true;
+    });
+    var element1: any = document.getElementsByClassName('btn-secondary');
+    element1[0].style.display = 'block';
   }
 
   color() {
@@ -544,66 +1267,7 @@ schoolWise() {
       return result;
     }
 
-    // function rgb2hsl(color) {
-    //   const r = color[0] / 255;
-    //   const g = color[1] / 255;
-    //   const b = color[2] / 255;
 
-    //   const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    //   let h, s, l = (max + min) / 2;
-
-    //   if (max == min) {
-    //     h = s = 0; // achromatic
-    //   } else {
-    //     let d = max - min;
-    //     s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
-    //     switch (max) {
-    //       case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-    //       case g: h = (b - r) / d + 2; break;
-    //       case b: h = (r - g) / d + 4; break;
-    //     }
-    //     h /= 6;
-    //   }
-
-    //   return [h, s, l];
-    // }
-
-    // function hue2rgb(p, q, t) {
-    //   if (t < 0) t += 1;
-    //   if (t > 1) t -= 1;
-    //   if (t < 1 / 6) return p + (q - p) * 6 * t;
-    //   if (t < 1 / 2) return q;
-    //   if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    //   return p;
-    // }
-
-    // function hsl2rgb(color) {
-    //   let l = color[2];
-
-    //   if (color[1] == 0) {
-    //     l = Math.round(l * 255);
-    //     return [l, l, l];
-    //   } else {
-    //     let s = color[1];
-    //     let q = (l < 0.5 ? l * (1 + s) : l + s - l * s);
-    //     let p = 2 * l - q;
-    //     let r = hue2rgb(p, q, color[0] + 1 / 3);
-    //     let g = hue2rgb(p, q, color[0]);
-    //     let b = hue2rgb(p, q, color[0] - 1 / 3);
-    //     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-    //   }
-    // }
-
-    // function _interpolateHsl(color1, color2, factor) {
-    //   if (arguments.length < 3) { factor = 0.5; }
-
-    //   let hsl1 = rgb2hsl(color1);
-    //   let hsl2 = rgb2hsl(color2);
-    //   for (let i = 0; i < 3; i++) {
-    //     hsl1[i] += factor * (hsl2[i] - hsl1[i]);
-    //   }
-    //   return hsl2rgb(hsl1);
-    // }
 
     function generateGradient(color1, color2, total, interpolation) {
       const colorStart = typeof color1 === 'string' ? hex2rgb(color1) : color1;
@@ -636,23 +1300,6 @@ schoolWise() {
 
       return arrReturnColors;
     }
-
-    // function colorsToGradientHsl(startColor, endColor, steps) {
-    //   // returns array of hex values for color, since rgb would be an array of arrays and not strings, easier to handle hex strings
-    //   let arrReturnColors = [];
-    //   let interimColorRGB;
-    //   let interimColorHex;
-    //   const totalColors = steps;
-    //   const factorStep = 1 / (totalColors - 1);
-
-    //   for (let idx = 0; idx < totalColors; idx++) {
-    //     interimColorRGB = _interpolateHsl(startColor, endColor, factorStep * idx);
-    //     interimColorHex = rgb2hex(interimColorRGB);
-    //     arrReturnColors.push(interimColorHex);
-    //   }
-
-    //   return arrReturnColors;
-    // }
 
     return {
       generateGradient
