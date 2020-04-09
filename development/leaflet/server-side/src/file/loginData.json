@@ -1,4 +1,14 @@
-{
-    "email": "cqube@gmail.com",
-    "password": "tibil123"
-}
+[
+    {
+        "email": "cqube@gmail.com",
+        "password": "tibil123"
+    },
+    {
+        "email": "admin@gmail.com",
+        "password": "tibil123"
+    },
+    {
+        "email": "user@gmail.com",
+        "password": "tibil123"
+    }
+]
