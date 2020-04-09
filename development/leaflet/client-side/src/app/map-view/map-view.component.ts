@@ -76,6 +76,7 @@ export class MapViewComponent implements OnInit {
       zoom: 7
     };
     globalMap = new L.Map('mapContainer', options);
+    console.log(globalMap);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}', {
       attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
       token: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
@@ -97,7 +98,6 @@ export class MapViewComponent implements OnInit {
   public markersList7 = new L.FeatureGroup();
   public markersList8 = new L.FeatureGroup();
 
-
   loaderAndErr() {
     if (this.markers.length !== 0) {
       document.getElementById('spinner').style.display = 'none';
@@ -116,7 +116,6 @@ export class MapViewComponent implements OnInit {
   }
 
   districtWise() {
-    globalMap.removeLayer(this.markersList);
     globalMap.removeLayer(this.markersList1);
     globalMap.removeLayer(this.markersList2);
     globalMap.removeLayer(this.markersList3);
@@ -125,7 +124,6 @@ export class MapViewComponent implements OnInit {
     globalMap.removeLayer(this.markersList6);
     globalMap.removeLayer(this.markersList7);
     globalMap.removeLayer(this.markersList8);
-    console.log(this.markersList);
     this.blockHidden = true;
     this.clusterHidden = true;
 
@@ -151,6 +149,7 @@ export class MapViewComponent implements OnInit {
       this.studentCount = 0;
       this.schoolCount = 0;
       this.dateRange = sorted[0]['data_from_date'] + " to " + sorted[0]['data_upto_date'];
+      console.log(this.markers);
       for (var i = 0; i < sorted.length; i++) {
         this.districtsIds.push(sorted[i]['x_axis']);
         this.districtsNames.push({ id: sorted[i]['x_axis'], name: sorted[i]['district_name'] });
@@ -177,8 +176,8 @@ export class MapViewComponent implements OnInit {
           });
           globalMap.setZoom(7);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
-            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].name +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
+            "<br><b>District: </b>" + "&nbsp;" + this.markers[i].id +
             "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
             "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
           );
@@ -189,15 +188,13 @@ export class MapViewComponent implements OnInit {
           marker.on('mouseout', function (e) {
             this.closePopup();
           });
-          marker.on('click', function (e) {
-            console.log(e.latlng.alt);
-          });
 
+          // marker.on('click', this.onClick_Marker(event));
+          // Attach the corresponding JSON data to your marker:}
         }
 
       };
       globalMap.addLayer(this.markersList);
-      console.log(this.markersList);
       this.loaderAndErr();
       this.changeDetection.markForCheck();
     });
@@ -212,6 +209,12 @@ export class MapViewComponent implements OnInit {
     });
 
   }
+
+  onClick_Marker(e) {
+    var marker = e.target;
+    console.log(marker);
+  }
+
 
   blockWise() {
     globalMap.removeLayer(this.markersList);
@@ -270,7 +273,7 @@ export class MapViewComponent implements OnInit {
 
           globalMap.setZoom(7);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
             "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].name +
             "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
@@ -354,7 +357,7 @@ export class MapViewComponent implements OnInit {
         })
         globalMap.setZoom(7);
         marker.addTo(globalMap).bindPopup(
-          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
           "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
           "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
           "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].cluster +
@@ -440,7 +443,7 @@ export class MapViewComponent implements OnInit {
         })
         globalMap.setZoom(7);
         marker.addTo(globalMap).bindPopup(
-          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
           "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
           "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
           "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
@@ -538,7 +541,7 @@ export class MapViewComponent implements OnInit {
           })
           globalMap.setZoom(8);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
             "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].name +
             "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
@@ -631,7 +634,7 @@ export class MapViewComponent implements OnInit {
           })
           globalMap.setZoom(9);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
             "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
             "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
@@ -721,7 +724,7 @@ export class MapViewComponent implements OnInit {
           })
           globalMap.setZoom(9.5);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
             "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
             "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].cluster +
@@ -838,7 +841,7 @@ export class MapViewComponent implements OnInit {
           })
           globalMap.setZoom(8.5);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
             "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
             "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
@@ -891,6 +894,8 @@ export class MapViewComponent implements OnInit {
         this.skul = true;
         this.blocksNames = [];
 
+
+
         this.mylatlngData = res;
 
 
@@ -929,7 +934,7 @@ export class MapViewComponent implements OnInit {
           })
           globalMap.setZoom(9.5);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].name +
             "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
             "<br><b>Number of students:</b>" + "&nbsp;" + this.markers[i].stdCount
@@ -958,7 +963,6 @@ export class MapViewComponent implements OnInit {
       globalMap.removeLayer(this.markersList1);
       globalMap.removeLayer(this.markersList2);
       globalMap.removeLayer(this.markersList3);
-      globalMap.removeLayer(this.markersList4);
       globalMap.removeLayer(this.markersList);
       globalMap.removeLayer(this.markersList5);
       globalMap.removeLayer(this.markersList6);
@@ -1017,7 +1021,7 @@ export class MapViewComponent implements OnInit {
           })
           globalMap.setZoom(8);
           marker.addTo(globalMap).bindPopup(
-            "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+            "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
             "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
             "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].name +
             "<br><b>Number of schools:</b>" + "&nbsp;" + this.markers[i].schCount +
@@ -1112,7 +1116,7 @@ export class MapViewComponent implements OnInit {
         })
         globalMap.setZoom(8.5);
         marker.addTo(globalMap).bindPopup(
-          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
           "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
           "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
           "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].name +
@@ -1206,7 +1210,7 @@ export class MapViewComponent implements OnInit {
         })
         globalMap.setZoom(9.5);
         marker.addTo(globalMap).bindPopup(
-          "<b>Attendance: </b>" + "&nbsp;" + this.markers[i].label + " %" +
+          "<b>Attendance : </b>" + "&nbsp;" + this.markers[i].label + "%" +
           "<br><b>District: </b>" + "&nbsp;" + this.markers[i].dist +
           "<br><b>Block: </b>" + "&nbsp;" + this.markers[i].block +
           "<br><b>Cluster (CRC): </b>" + "&nbsp;" + this.markers[i].cluster +
